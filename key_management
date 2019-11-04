@@ -1,0 +1,11 @@
+Whether keys are used to authenticate users or to encrypt data, they are the secret value upon which
+wireless networks rely. A key can be common to several users. For wireless networks, the key can be stored 
+on the AP and shared among those who are allowed to access the network via this AP.
+
+A common key can be used in three ways:
+
+- For authentication only: only users who have the key can access the network, but their subsequent communication 
+is sent unencrypted
+- For encryption only: any user can assosiate to the WLAN, but only users who have a valid key can send are receive
+traffic to and from other users of the AP
+- For authentication and encryption: the key is used for both authentication and encryption
