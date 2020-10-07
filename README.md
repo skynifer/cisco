@@ -1,2 +1,2 @@
 # wireless
-information_for_presentation
+common command
