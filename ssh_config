@@ -1,0 +1,122 @@
+Configuring a Device for SSH Version 2 Using a Hostname and Domain Name
+
+SUMMARY STEPS
+
+1.    enable
+
+2.    configure terminal
+
+3.    hostname name
+
+4.    ip domain-name name
+
+5.    crypto key generate rsa
+
+6.    ip ssh [time-out seconds | authentication-retries integer]
+
+7.    ip ssh version [1 | 2]
+
+8.    exit
+
+
+Configuring a Device for SSH Version 2 Using RSA Key Pairs
+
+SUMMARY STEPS
+
+1.    enable
+
+2.    configure terminal
+
+3.    ip ssh rsa keypair-name keypair-name
+
+4.    crypto key generate rsa usage-keys label key-label modulus modulus-size
+
+5.    ip ssh [time-out seconds | authentication-retries integer]
+
+6.    ip ssh version 2
+
+7.    exit
+
+Configuring the Cisco SSH Server to Perform RSA-Based User Authentication
+
+SUMMARY STEPS
+
+1.    enable
+
+2.    configure terminal
+
+3.    hostname name
+
+4.    ip domain-name name
+
+5.    crypto key generate rsa
+
+6.    ip ssh pubkey-chain
+
+7.    username username
+
+8.    key-string
+
+9.    key-hash key-type key-name
+
+10.    end
+
+Configuring the Cisco IOS SSH Client to Perform RSA-Based Server Authentication
+
+SUMMARY STEPS
+
+1.    enable
+
+2.    configure terminal
+
+3.    hostname name
+
+4.    ip domain-name name
+
+5.    crypto key generate rsa
+
+6.    ip ssh pubkey-chain
+
+7.    server server-name
+
+8.    key-string
+
+9.    exit
+
+10.    key-hash key-type key-name
+
+11.    end
+
+12.    configure terminal
+
+13.    ip ssh stricthostkeycheck
+
+
+Example:
+Device# ssh -v 2 -c aes256-ctr -m hmac-sha1-96 -l user2 10.76.82.24
+
+
+Enabling Secure Copy Protocol on the SSH Server
+
+SUMMARY STEPS
+1.    enable
+
+2.    configure terminal
+
+3.    aaa new-model
+
+4.    aaa authentication login default local
+
+5.    aaa authorization exec defaultlocal
+
+6.    usernamename privilege privilege-level password password
+
+7.    ip ssh time-outseconds
+
+8.    ip ssh authentication-retries integer
+
+9.    ip scpserverenable
+
+10.    exit
+
+11.    debug ip scp
