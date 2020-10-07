@@ -1,0 +1,115 @@
+Configuration 
+
+Step 1
+
+Connect only the gig port to the switch. Configure the switch port which goes to the AP gig port i.e gig 1/0/10 (in this case)
+interface GigabitEthernet1/0/10
+switchport mode access
+end
+
+Step 2
+
+Once the AP registers to the WLC, run the following commands from the WLC command line.
+
+config ap lag-mode support enable 
+(This will NOT result in a reboot of the APs that support LAG)
+
+
+Step 3
+
+For load balancing on the LAG ports to the AP and the controller, the switch should support load balancing on the layer 4 (L4) 
+source and destination ports. Run the following command from the switch config mode.
+
+
+port-channel load-balance src-dst-port
+
+If one doesn't configure L4 port load balancing (for example when using a switch model which does not support this feature) 
+then the port channel will still come up but all the traffic will go through the same port. 
+One will not have 2 gigabits of speed but there will be redundancy.
+
+
+Step 4
+
+Now configure both the switch ports (g1/0/10 and g1/0/9) into etherchannel and plug the AP aux port into the other switch port i.e. g1/0/9. At this point we have both the AP gig and aux port connected to the switch.
+
+interface GigabitEthernet1/0/10
+switchport mode access
+channel-group 1 mode active
+end
+
+ 
+
+interface GigabitEthernet1/0/9
+switchport mode access
+channel-group 1 mode active
+end
+
+ 
+
+interface Port-channel1
+switchport mode access
+end
+
+
+If you want to use mode "ON" instead of LACP, use command "channel-group 1 mode on" under the switch ports.
+
+Any further configuration change (moving to trunk, adding supported vans) has to be done through the portchannel 
+interface from now on.
+
+Important note
+
+The 3800 AP primary port is mGig capable (up to 5Gbps) while the AUX port is a standard Gigabit port. This means that if 
+you set up LAG on a mGig capable switch and 3802 access point, the portchannel will be suspended due to the difference in speeds :
+
+*Nov 21 20:37:04.987: %LINK-3-UPDOWN: Interface TenGigabitEthernet1/0/39, changed state to down
+*Nov 21 20:37:07.122: %EC-5-CANNOT_BUNDLE2: Te1/0/39 is not compatible with Te1/0/40 
+
+
+Verify
+The state of the LAG configuration on the controller and AP can be seen using the following commands on the controller:
+
+show ap lag-mode
+LAG-Mode Support ................................ Enabled
+
+
+
+show ap config general <ap-name>
+
+AP LAG Configuration Status ..................... Enabled
+LAG Support for AP .............................. Yes
+
+show lag summary
+show configuration
+
+If you see the LAG support staying as "No", it might be because the DTLS data encryption is enabled. LAG is not supported along with DTLS data encryption.
+
+
+The successful formation of LAG between AP and the switch can be seen using the following commands on the switch:
+
+sh etherchannel summary
+Number of channel-groups in use: 1
+Number of aggregators: 1
+
+Group Port-channel Protocol Ports
+------+-------------+-----------+-----------------------------------------------
+1 Po1(SU) LACP Gi1/0/9(P) Gi1/0/10(P)
+
+show lacp neighbors
+Channel group 1 neighbors
+
+Partner's information:
+
+LACP port Admin Oper Port Port
+Port Flags Priority Dev ID Age key Key Number State
+Gi1/0/9 SA 32768 00f2.8b26.90b0 14s 0x0 0x300 0x1 0x3D
+Gi1/0/10 SA 32768 00f2.8b26.90b0 0s 0x0 0x300 0x0 0x3D
+
+show lacp internal
+
+
+
+Channel group 1
+LACP port Admin Oper Port Port
+Port Flags State Priority Key Key Number State
+Gi1/0/9 SA bndl 32768 0x1 0x1 0x10A 0x3D
+Gi1/0/10 SA bndl 32768 0x1 0x1 0x10B 0x3D
