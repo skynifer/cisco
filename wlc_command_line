@@ -1,0 +1,41 @@
+https://www.cisco.com/c/en/us/td/docs/wireless/controller/technotes/8-6/b_Cisco_Wireless_LAN_Controller_Configuration_Best_Practices.html
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+show interface detailed management
+show interface summary
+show client summary devicetype
+show avc statistics wlan <WLAN id>
+show network summary
+show ap summary
+show wps summary
+show wlan <wlan_id>
+show wlan <wlan_id>
+show wlan <wlan_id>
+show wlan <wlan_id>
+
+config time ntp server 1 10.10.10.1
+config time ntp auth enable <ntp server index>
+config time ntp key-auth add <key index>
+
+show advanced eap
+show advanced eap
+show snmpv3user 
+show snmpcommunity
+show rogue rule detailed rule1
+show rogue ap summary
+
+
+Configuring the Switch for Port Authentication
+The following is a sample configuration to enable 802.1X authentication on a switch port:
+
+Switch# configure terminal
+Switch(config)# dot1x system-auth-control
+Switch(config)# aaa new-model
+Switch(config)# aaa authentication dot1x default group radius
+Switch(config)# radius-server host <ip_addr> auth-port <port> acct-port <port> key <key>
+Switch(config)# interface gigabitethernet2/1
+Switch(config-if)# switchport mode access
+Switch(config-if)# dot1x pae authenticator
+Switch(config-if)# dot1x port-control auto
+Switch(config-if)# end
