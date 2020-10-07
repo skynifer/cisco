@@ -1,0 +1,766 @@
+------------------ https://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html ------------------------------
+
+
+Background Information
+The three functional planes of a network, the management plane, control plane, and data plane, each provide different functionality 
+that needs to be protected.
+
+Management Plane - The management plane manages traffic that is sent to the Cisco IOS device and is made up of applications and 
+                   protocols such as Secure Shell (SSH) and Simple Network Management Protocol (SNMP).
+
+Control Plane - The control plane of a network device processes the traffic that is paramount to maintain the functionality of the 
+                network infrastructure. The control plane consists of applications and protocols between network devices, which 
+                includes the Border Gateway Protocol (BGP), as well as the Interior Gateway Protocols (IGPs) such as the Enhanced Interior Gateway Routing Protocol (EIGRP) and Open Shortest Path First (OSPF).
+
+Data Plane - The data plane forwards data through a network device. The data plane does not include traffic that is sent to the local 
+             Cisco IOS device.
+             
+----------------------------------- Management Plane ------------------------------------
+Passwords
+
+!
+!
+enable secret 'password'
+!
+
+---------------------- Enable MD5 hashing (secret option) for enable and local user passwords-------------------------
+
+!
+service password-encryption
+!
+username <username> privilege 15 algorithm-type scrypt secret <secret>
+!
+!
+---------------------- Configure the password retry lockout -------------------------------------------
+!
+!
+
+aaa new-model
+aaa local authentication attempts max-fail <max-attempts>
+aaa authentication login default local
+
+!
+
+----------------------- Disable unused services ------------------------------------- 
+
+!
+no service tcp-small-servers
+no ip finger
+no ip domain-lookup
+no ip http server
+no ip http secure-server 
+no service config
+no cdp run
+no lldp run
+
+!
+!
+
+line con 0
+ exec-timeout <minutes> [seconds]
+line vty 0 4
+ exec-timeout <minutes> [seconds]
+!
+
+
+-------------------------- Configure TCP keepalives for management sessions ---------------------- 
+
+!
+!
+
+service tcp-keepalives-in
+service tcp-keepalives-out
+!
+
+------------------------- Set memory and CPU threshold notifications ---------------------------
+
+!
+!
+!
+!
+
+snmp-server enable traps cpu threshold
+!
+
+snmp-server host <host-address> <community-string> cpu 
+!
+
+process cpu threshold type <type> rising <percentage> interval <seconds> 
+     [falling <percentage> interval <seconds>]
+process cpu statistics limit entry-percentage <number> [size <seconds>]
+!
+
+
+------------------------------------        Configure          -----------------------------
+
+Reserve memory for console access
+
+!
+!
+memory reserve console 4096
+!
+
+------------------------ Memory leak detector ----------------------------
+
+! ---  show memory debug leaks
+ ----  show memory overflow 
+!
+
+
+------------------------- Buffer overflow detection -------------------------
+
+!
+!
+!
+exception memory ignore overflow io
+exception memory ignore overflow processor
+!
+
+-------------------------- Enhanced crashinfo collection ------------------------
+
+!
+!
+exception crashinfo maximum files <number-of-files>
+!
+
+-------------------------- Use iACLs to restrict management access -----------------------------
+
+!
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Permit required connections for routing protocols and
+!--- network management
+!
+
+ permit tcp host <trusted-ebgp-peer> host <local-ebgp-address> eq 179
+ permit tcp host <trusted-ebgp-peer> eq 179 host <local-ebgp-address>
+ permit tcp host <trusted-management-stations> any eq 22
+ permit udp host <trusted-netmgmt-servers> any eq 161
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+
+
+---------------------------------------------- Filter (consider risk) --------------------------------------------
+
+-------- ICMP packets --------------
+!
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Permit ICMP Echo (ping) from trusted management stations and servers
+!
+
+ permit icmp host <trusted-management-stations> any echo
+ permit icmp host <trusted-netmgmt-servers> any echo
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+
+
+------------------- IP fragments -----------------------
+
+!
+!
+
+ip access-list extended ACL-FRAGMENT-EXAMPLE
+ permit tcp any host 192.168.1.1 eq 80
+ deny tcp any host 192.168.1.1 eq 22
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Deny IP fragments using protocol-specific ACEs to aid in
+!--- classification of attack traffic
+!
+
+ deny tcp any any fragments
+ deny udp any any fragments
+ deny icmp any any fragments
+ deny ip any any fragments
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+
+--------------------- IP options -------------------------------
+
+
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Deny IP packets containing IP options
+!
+
+ deny ip any any option any-options
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+
+------------------------- TTL value in packets ----------------------------
+
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Deny IP packets with TTL values insufficient to traverse the network
+!
+
+ deny ip any any ttl lt 6
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+----------------------------- Management Plane Protection --------------------
+
+!
+
+control-plane host
+  management-interface GigabitEthernet 0/1 allow ssh https
+!
+
+----------------------------- Control Plane Protection -------------------------------
+
+1. Port-filtering feature - This feature provides for the policing or dropping of packets that go to 
+closed or non-listening TCP and UDP ports.
+
+2. Queue-threshold policy feature - This feature limits the number of packets for a specified protocol 
+that are allowed in the control plane IP input queue.
+
+
+--------------------- Configure port filtering --------------
+
+
+Configure queue thresholds
+
+Management access
+
+Use Management Plane Protection to restrict management interfaces
+Set exec timeout
+------------------  Use an encrypted transport protocol (such as SSH) for CLI access -----------------
+!
+!
+
+ip domain-name example.com
+!
+
+crypto key generate rsa modulus 2048
+!
+
+ip ssh time-out 60
+ip ssh authentication-retries 3
+ip ssh source-interface GigabitEthernet 0/1
+!
+ip ssh version
+
+line vty 0 4
+ transport input ssh
+!
+
+Control transport for vty and tty lines (access class option)
+Warn using banners
+
+AAA
+
+Use AAA for authentication and fallback
+Use AAA (TACACS+) for command authorization
+Use AAA for accounting
+Use redundant AAA servers
+
+SNMP
+
+Configure SNMPv2 communities and apply ACLs
+Configure SNMPv3
+
+Logging
+
+Configure centralized logging
+Set logging levels for all relevant components
+Set logging source-interface
+Configure logging timestamp granularity
+
+Configuration Management
+
+Replace and rollback
+Exclusive Configuration Change Access
+Software resilience configuration
+Configuration change notifications
+Control Plane
+Disable (consider risk)
+
+ICMP redirects
+ICMP unreachables
+Proxy ARP
+
+Configure NTP authentication if NTP is being used
+
+Configure Control Plane Policing/Protection (port filtering, queue thresholds)
+
+Secure routing protocols
+
+BGP (TTL, MD5, maximum prefixes, prefix lists, system path ACLs)
+IGP (MD5, passive interface, route filtering, resource consumption)
+
+Configure hardware rate limiters
+
+Secure First Hop Redundancy Protocols (GLBP, HSRP, VRRP)
+Data Plane
+Configure IP Options Selective Drop
+
+Disable (consider risk)
+
+IP source routing
+IP Directed Broadcasts
+ICMP redirects
+
+Limit IP Directed Broadcasts
+
+Configure tACLs (consider risk)
+
+Filter ICMP
+Filter IP fragments
+Filter IP options
+Filter TTL values
+
+Configure required anti-spoofing protections
+
+ACLs
+IP Source Guard
+Dynamic ARP Inspection
+Unicast RPF
+Port security
+
+Control Plane Protection (control-plane cef-exception)
+
+Configure NetFlow and classification ACLs for traffic identification
+
+Configure required access control ACLs (VLAN maps, PACLs, MAC)
+
+Configure Private VLANs            
+             
+!
+enable 
+configure terminal 
+!
+hostname "SW_N"
+!
+line con 0 
+logg syn
+exec-timeout 0 0
+enable secret "password"
+service password-encryption
+!
+! ------- Use of Type 7 Passwords -------
+!
+username <username> privilege 15 algorithm-type scrypt secret <secret>
+!
+aaa new-model
+aaa local authentication attempts max-fail <max-attempts>
+aaa authentication login default local
+!
+no ip http server
+no ip http secure-server
+no service config
+!
+line con 0
+ exec-timeout <minutes> [seconds]
+line vty 0 4
+ exec-timeout <minutes> [seconds]
+ !
+ service tcp-keepalives-in
+service tcp-keepalives-out
+!
+vlan "N"
+name MGT
+interface vlan "N" 
+ip address 10.10.10.10 255.255.255.0
+no sh
+!
+snmp-server enable traps cpu threshold
+snmp-server host <host-address> <community-string> cpu 
+process cpu threshold type <type> rising <percentage> interval <seconds> 
+     [falling <percentage> interval <seconds>]
+process cpu statistics limit entry-percentage <number> [size <seconds>]
+!
+!
+memory reserve console 4096
+!
+!
+exception memory ignore overflow io
+exception memory ignore overflow processor
+!
+!
+exception crashinfo maximum files <number-of-files>
+!
+!
+ntp authenticate
+ntp authentication-key 5 md5 ciscotime
+ntp trusted-key 5
+ntp server 172.16.1.5 key 5
+!
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Permit required connections for routing protocols and
+!--- network management
+!
+
+ permit tcp host <trusted-ebgp-peer> host <local-ebgp-address> eq 179
+ permit tcp host <trusted-ebgp-peer> eq 179 host <local-ebgp-address>
+ permit tcp host <trusted-management-stations> any eq 22
+ permit udp host <trusted-netmgmt-servers> any eq 161
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Permit ICMP Echo (ping) from trusted management stations and servers
+!
+
+ permit icmp host <trusted-management-stations> any echo
+ permit icmp host <trusted-netmgmt-servers> any echo
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+!
+
+ip access-list extended ACL-FRAGMENT-EXAMPLE
+ permit tcp any host 192.168.1.1 eq 80
+ deny tcp any host 192.168.1.1 eq 22
+!>
+
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Deny IP fragments using protocol-specific ACEs to aid in
+!--- classification of attack traffic
+!
+
+ deny tcp any any fragments
+ deny udp any any fragments
+ deny icmp any any fragments
+ deny ip any any fragments
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Deny IP packets containing IP options
+!
+
+ deny ip any any option any-options
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+!
+
+ip access-list extended ACL-INFRASTRUCTURE-IN
+!
+!--- Deny IP packets with TTL values insufficient to traverse the network
+!
+
+ deny ip any any ttl lt 6
+!
+!--- Deny all other IP traffic to any network device
+!
+
+ deny ip any <infrastructure-address-space> <mask>
+!
+!--- Permit transit traffic
+!
+
+ permit ip any any
+!
+!
+
+control-plane host
+  management-interface GigabitEthernet 0/1 allow ssh https
+!
+!
+
+ip domain-name example.com
+!
+
+crypto key generate rsa modulus 2048
+!
+
+ip ssh time-out 60
+ip ssh authentication-retries 3
+ip ssh source-interface GigabitEthernet 0/1
+!
+ip ssh version 2
+!
+line vty 0 4
+ transport input ssh
+!
+!
+!
+! ------- Console and AUX Ports ----------
+!
+line aux 0
+ transport input none
+ transport output none
+ no exec
+ exec-timeout 0 1
+ no password
+!
+! -------- TACACS+ Authentication --------
+!
+!
+!
+aaa new-model
+aaa authentication login default group tacacs+ enable
+!
+
+tacacs-server host <ip-address-of-tacacs-server>
+tacacs-server key <key>
+!
+! -------- SNMP Community Strings -----------
+!
+!
+!
+snmp-server community READONLY RO
+snmp-server community READWRITE RW  
+!
+
+!---------- SNMP Community Strings with ACLs -------
+!
+!
+
+access-list 98 permit 192.168.100.0 0.0.0.255
+access-list 99 permit 192.168.100.1
+!
+
+snmp-server community READONLY RO 98
+snmp-server community READWRITE RW 99
+!
+!------------ SNMP Views -----------
+!
+!
+
+snmp-server view VIEW-SYSTEM-ONLY system include
+!
+
+snmp-server community LIMITED view VIEW-SYSTEM-ONLY RO
+!
+! ------- SNMP Version 3 ---------
+show snmp engineID
+!
+!
+snmp-server group AUTHGROUP v3 auth
+!
+!
+snmp-server group PRIVGROUP v3 priv
+!
+!
+!
+snmp-server user snmpv3user PRIVGROUP v3 auth md5 authpassword priv 3des 
+     privpassword
+!
+!
+show snmp user 
+!
+! ----------- Management Plane Protection ---------
+!
+!
+control-plane host
+ management-interface FastEthernet0/0 allow ssh snmp 
+!
+!
+! ------------- Logging Best Practices -----------
+!
+!
+logging host <ip-address>
+!
+logging buffered
+logging persistent url disk0:/syslog size 134217728 filesize 16384
+!
+! ------- This example shows how to copy logging messages from the router ATA flash disk to an 
+           external disk on FTP server 192.168.1.129 as part of maintenance procedures: ------
+           
+copy disk0:/syslog ftp://myuser/mypass@192.168.1.129/syslog
+!
+!
+!
+logging trap 6
+logging buffered 6
+!
+!
+no logging console
+no logging monitor
+!
+!
+logging buffered 16384 6
+!
+!
+logging source-interface Loopback 0
+!
+!---------- Configure Logging Timestamps--------------
+!
+service timestamps log datetime msec show-timezone
+!
+!
+
+clock timezone PST -8
+service timestamps log datetime msec localtime show-timezone
+!
+!
+!--------------- Archive ------------
+!
+!
+
+archive
+ path disk0:archived-config
+ maximum 14
+ time-period 1440
+ write-memory
+!
+!
+
+archive
+ log config
+  logging enable
+  logging size 200
+  hidekeys
+  notify syslog
+!
+! ------ This is the receive path ACL that is written to permit SSH (TCP port 22)----
+
+!
+!
+!--- Permit SSH from trusted hosts allowed to the device.
+!
+
+access-list 151 permit tcp 192.168.100.0 0.0.0.255 any eq 22
+!
+!--- Deny SSH from all other sources to the RP.
+!
+
+access-list 151 deny tcp any any eq 22
+!
+!--- Permit all other traffic to the device.
+!--- according to security policy and configurations.
+!
+
+access-list 151 permit ip any any
+!
+!--- Apply this access list to the receive path.
+!
+
+ip receive access-list 151
+!
+! ----------- IP Source Guard ---------
+!
+!
+
+ip dhcp snooping
+ip dhcp snooping vlan <vlan-range>
+!
+After DHCP snooping is enabled, these commands enable IPSG:
+
+!
+interface <interface-id>
+   ip verify source 
+!
+! ---------- Port Security --------------
+!
+!
+
+interface <interface> 
+  switchport
+  switchport mode access 
+  switchport port-security
+  switchport port-security mac-address sticky
+  switchport port-security maximum <number>
+  switchport port-security violation <violation-mode>
+!
+! ------------- Dynamic ARP Inspection ------------
+!
+!
+ip dhcp snooping
+ip dhcp snooping vlan <vlan-range>
+!
+Once DHCP snooping has been enabled, these commands enable DAI:
+
+!
+ip arp inspection vlan <vlan-range> 
