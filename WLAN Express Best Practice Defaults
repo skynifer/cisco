@@ -1,0 +1,322 @@
+1. AVC Visibility                          14. Management over Wireless disabled
+2. mDNS snooping                           15. Load Balancing  
+3. mDNS Profile for printer                16. Rogue Threshol Enabled
+4. Local profiling                         17. Client Exclusion Enabled
+5. Band Select                             18. FastSSID Enabled
+6. DHCP proxy                              19. Infra MFP
+7. Secure Web access                       20. Multicast Forwarding mode
+8. Virtual IP 192.0.2.1                    21. SNMPv3 (delete default)
+9. RRM-DCA Auto                            22. Mobility Name
+10. RRM-TPc Auto                           23. RF Group same as Mobility Name
+11. CleanAir Enabled                       24. DHCP required on Guest WLAN
+12. EDRRM Enabled                          25. 5 GHz Channel Bonding
+13. Channel Width 40 MHz
+14. Aironet IE Disabled
+---------------------------------------------------------------------------------------------------------------------------------------
+https://www.ciscolive.com/c/dam/r/ciscolive/emea/docs/2016/pdf/BRKEWN-2670.pdf
+---------------------------------------------------------------------------------------------------------------------------------------
+                                                 Best Practices Recommendations
+ - Infrastructure
+ - Mesh
+ - Security
+ - Wireless / RF
+
+------------------------------------------------------- Infrastructure ---------------------------------------------------------------- 
+
+1. Enable High Availability (AP and Client SSO)
+
+{ A direct physical connection between Active and Standby Redundant Ports or Layer 2 connectivity is required
+to provide stateful redundancy within or across datacenters }
+
+2. Enable AP Failover Priority
+
+{ • Wireless > Access Points > Global Configurations
+  • Wireless > Access Points > All APs -> AP_NAME > High Availability }
+  
+3. Enable AP Multicast Mode
+
+{ Controller > General > AP Multicast Mode }
+// Network infrastructure must provide multicast routing between management interface subnet and AP subnet 
+   Forward multicast traffic to Access Points instead of sending unicast messages to each individual AP //
+
+4. Enable Multicast VLAN
+
+{ WLANs > WLAN Name > General }
+
+// To limit the multicast on the air to a single copy on a predefined multicast VLAN //
+
+
+5. Enable Pre-image download
+
+{ Wireless > Global Configurations > AP Image Pre-download }
+
+6. Enable AVC
+
+{ Wireless > Application Visibility and Control > AVC Profiles }
+
+// Classifies applications, provides real-time analysis, and allows users to drop or mark data. Peruser,
+per-device granularity for control //
+
+7. Enable NetFlow
+
+{ Wireless > Netflow > Exporter > Create ‘New’ }
+
+// NetFlow export to Cisco Prime or third party network management tool //
+
+8. Enable Local Profiling (DHCP and HTTP)
+
+{ WLANs > Edit > WLAN_NAME > Advanced }
+
+// Client devices can be profiled based on their manufacturer and operating system //
+
+9. Enable NTP
+
+{ Controller > NTP > Keys
+  Controller > NTP > Server
+
+10. Modify the AP Re-transmit Parameters
+
+{ Wireless > Access Points > Global Configuration }
+
+// Allows user to customize the way APs attempt to join a WLC.
+Increase count and interval for larger latency links like FlexConnect and satellite links //
+Number of times the AP will
+try to join the WLC (3-8)
+
+11. Enable FastSSID change
+
+{ Controller > General } 
+Allows clients to move faster between SSIDs, by not clearing the client entry
+
+12. Enable Per-user BW contracts
+ 
+{ WLANs > Edit ‘WLAN_NAME’ > QoS } Enforces limits on non-mission critical clients Limit data rates for Guest
+and Contractor accounts
+
+13. Enable Multicast Mobility
+
+Controller > Multicast
+Controller > General
+
+// Allows clients to announce messages to all mobility peers, instead of individual WLCs, benefiting
+time, CPU usage, and network utilization. Multicast routing between controllers  //
+
+14. Enable Client Load balancing
+
+{ WLANs > Edit “WLAN-NAME” > Advanced }
+
+// Balances the number of clients connect to a WLAN between multiple APs
+Not suitable for Voice, Low Density and single AP deployments like hotspots // 
+
+15. Disable Aironet IE
+
+{ WLANs > Edit “WLAN-NAME” > Advanced }
+
+// Can cause compatibility issues with some types of wireless clients
+Enable for WGB and Cisco voice. Optional for CCX based clients //
+
+16. Same Vitrual IP if same mobility name
+
+{ Controller > Interfaces > virtual }
+
+// Inter-controller roaming can appear to work, but the hand-off does not complete and the
+client loses connectivity when DHCP renew is performed if DHCP proxy enabled //
+
+
+
+--------------------------------------------- --------- MESH -----------------------------------------------------------------------------
+
+1. Set Bridge Group Name
+2. Set Preferred Parent
+3. Multiple Root APs in each BGN
+7. Set Backhaul rate to "Auto"
+8. Set Backhaul Channel Width to 40/80 MHz
+9. Backhaul Link SNR > 25 dBm
+10. Avoid DFS channels for Backhaul
+11. External RADIUS server for Mesh MAC Authentication
+12. Enable IDS
+13. Enable EAP Mesh Security Mode
+
+------------------------------------------------------ Security --------------------------------------------------------------------------- 
+
+1. Enable 802.1x and WPA/WPA2 on WLAN
+
+WLANs > Edit ‘WLAN_NAME’ > Security
+
+Provides greater network security on WLAN using 802.1x authentication
+
+2. Enable 802.1x authentication for AP
+
+Wireless > Access Points > Global Configurations
+
+Provides greater network security by enabling 802.1x on the switch port where AP is
+connected. Not supported for Mesh deployments
+
+3. Change advance EAP timers
+
+4. Enable SSH and disable telnet
+
+Management > Telnet–SSH
+Disable Telnet and enable SSH as the default option
+
+Provides greater security by allowing secure access and denying unencrypted access
+
+5. Disable Management Over Wireless
+
+Management > Mgmt Via Wireless
+
+6. Disable WiFi Direct
+
+WLANs > WLAN Name > Advanced
+
+Prevent security hole if the device is connected to both the infrastructure and a
+Personal Area Network (PAN) at the same time. Will break Android devices
+
+7. Peer-to-peer blocking
+8. Secure Web Access (HTTPS)
+
+Management > HTTP-HTTPS
+
+Provides greater security by allowing secure access
+
+9. Enable User Policies
+10. Enable Client exclusion policies
+
+Security > Wireless Protection Policies > Client Exclusion Policies
+
+Enable exclusion policies to prevent the network from Assoc/Auth failure attacks.
+Disable for Voice deployments
+
+11. Enable rogue policies and Rogue Detection RSSI
+
+Security > Wireless Protection Policies > Rogue Policies > General > Low
+
+The Rogue Detection Security Level should be set at a minimum to “low”
+
+12. Strong password Policies
+13. Enable IDS
+14. BYOD Timers 
+
+Security > AAA > RADIUS > Authentication 
+BYOD: Radius Timeout >=5 sec
+
+To prevent pre-mature failover since the default of 2 seconds is generally low for ISE as ISE relies
+on backend databases for user lookups and group fetches. Too high causes queue issues on WLC
+
+BYOD : Disable Aggressive Failover 
+
+config radius aggressive-failover disable command to disable the
+aggressive failover feature
+show radius summary to check the status of this feature
+Only fails over to the next AAA server if there are three consecutive clients that
+fail to receive a response from the RADIUS server
+BYOD : Disable Aggressive Failover
+97
+In some circumstances it can cause the WLC to pre-maturely mark ISE dead in times of
+high load and cause additional load on ISE 
+
+                                          << FlexConnect Best Practices >>
+                                          
+1.  Enable FlexConnect Groups
+
+Wireless > FlexConnect Groups > Edit “Groupname”
+
+
+Allow users to assign specific APs to groups with set configurations, OKC/CCKM key
+caching for Voice, Local RADIUS server configuration, consistent WLAN mappings
+
+
+2.  CCKM/OKC Key sharing, consistent WLAN mappings
+3.  Enable Smart AP Image Upgrade
+
+Wireless > Flexconnect Groups > Edit “Groupname” > Image Upgrade Tab
+
+
+Avoids downloading multiple copies of the Access Point software over the slow WAN link
+to the remote site, reduces service downtime and reduces risk of download failure
+
+
+4.  FlexConnect Group level VLAN Configuration
+--------------------------------------------------- WIRELESS / RF ---------------------------------------------------------------------
+ 
+
+1. Disable 802.11b data rates
+
+Wireless > 802.11b/g/n > Network
+
+Management frames sent at 62 lowest mandatory rate - slows down the entire cell
+
+2. Restrict number of WLAN below 4
+
+3. Enable channel bonding – 40 or 80 MHz
+
+Wireless > 802.11a/n/ac > RRM > DCA
+
+40/80MHz wide channels in the 5GHz space can 2x/4x the amount of user data than can be
+transmitted. For extreme HD deployments use 20 MHz channels to keep cell size small
+
+Select the widest Channel Width with:
+• Highest Client Data Rates
+• Lowest Channel Utilization per Radio
+• Minimize Data Retries / CRC errors
+• On the 5GHz Band
+While avoiding:
+• Rogue APs
+• CleanAir Interferers
+
+4. Enable BandSelect
+
+WLANs > Edit “WLAN-NAME” > Advanced
+
+Allows dual-band clients to move to the less congested 5GHz band
+Not recommended for Voice deployments 
+
+• Today
+• 802.11 data rates
+• TPC Power Threshold and Min max Power settings
+• DCA
+• Coverage hole algorithm settings
+• High Density – HDX configurations RX_SOP, Client Limit, Mcast data rate
+• Client Distribution
+
+
+5. Use RF Profiles and AP Groups
+
+• RF Profiles work in Conjunction with AP Groups (beginning in release 7.2)
+• You can create separate RF profiles for both 2.4 and 5 GHz
+• 1 profile for each band (802.11a/802.11b) can be assigned to an AP group
+
+6. Enable RRM (DCA & TPC) to be auto
+
+
+7. Enable Auto-RF group leader selection
+
+Wireless > Network Profile
+
+Sets pre-defined RF parameters depending on “Client” Density and Traffic Type
+
+Client Density specific pre-built RF profiles for 2.4 GHz and 5GHz Bands – to be used
+with AP Groups 
+
+8. Enable Cisco CleanAir and EDRRM
+
+Wireless > 802.11a/n/ac or 802.11b/g/n > RRM > DCA 
+
+EDRRM triggers RRM to run when an access point detects a certain level of interference
+
+Wireless > 802.11a/n/ac or 802.11b/g/n > CleanAir
+
+CleanAir identifies non-WIFI interferers and generates interferer and air quality reports
+
+9. Enable Noise & Rogue Monitoring on all channels
+
+Wireless > 802.11a/n/ac or 802.11b/g/n > RRM > General
+
+Wireless > 802.11a/n/ac > RRM > DCA
+Wireless > 802.11b/g/n > RRM > DCA
+
+To avoid frequent changes in DCA due to varying Load conditions
+
+10. Enable DFS channels
+11. Avoid Cisco AP Load
+
