@@ -1,0 +1,73 @@
+https://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst9300/software/release/16-9/configuration_guide/sys_mgmt/b_169_sys_mgmt_9300_cg.pdf
+
+show version         confreg 0x0102
+ show running-config
+ show switch
+ show int trunk
+ 
+ show platform sudi certificate
+ show platform sudi certificate sign nonce 123
+
+show software authenticity file
+
+{bootflash0:filename |
+bootflash1:filename | bootflash:filename | nvram:filename | usbflash0:filename |
+usbflash1:filename}
+
+
+ show software authenticity keys
+ show software authenticity running
+ show license all
+ show license status
+ show version         confreg 0x0102
+ show running-config
+ 
+ { security passwords min-length }
+ 
+ 
+ ----------------------------------------------------------------------------------------------------------------------------------------
+ 
+ ip name-server 
+ ip name-server vrf Mgmt-vrf
+ ip domain lookup source interface
+ ip host tools.cisco.com
+ interface
+ ntp server
+ switchport access vlan
+ ip route
+ 
+ ---------------------------------------------------- TIME -------------------------------------------------------------------------------
+ 
+ clock timezone UKR 2
+clock summer-time UKR recurring last Sun Mar 2:00 last Sun Oct 3:00
+
+ntp logging
+ntp clock-period 
+ntp source Vlan ID
+ntp access-group peer 66
+ntp access-group serve-only 67
+ntp server 
+
+-------------------------------------------- Manually Assigning IP Information to Multiple SVIs ----------------------------------------
+
+1. configure terminal
+2. interface vlan vlan-id
+3. ip address ip-address subnet-mask
+4. exit
+5. ip default-gateway ip-address
+6. end
+7. show interfaces vlan vlan-id
+8. show ip redirects
+
+
+end
+
+---------------------------------------------            System Log Message Format -------------------------------------------------------------
+terminal monitor
+logging history debugging
+logging origin-id string /////
+logging facility syslog
+logging source-interface Vlan
+logging host /////
+logging buffered 8192
+
