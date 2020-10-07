@@ -1,0 +1,141 @@
+Central Web Authentication: Lesson 1: Web Authentication Overview
+
+
+Web Auth Overview
+
+
+- Tupically used for guests
+- Provides network access after authentication via HTTP/HTTPS
+- Users are automatically redirected to authentication portal
+- May be used in 802.1X environmental as a fallback method
+- Works in both wired and wirelass envinmental
+
+Portal and URL redirection 
+
+
+- Central Web Auth
+- Device Registration (Web Auth)
+- BYOD On-boarding
+  - Certificate Provisioning
+  - Supplicant configuration
+- Client software provisioning
+- Posture Discovery / Assessment
+- My device portal 
+- External Web Page
+
+
+Web Auth Process
+
+1. Initial authorization assignment restricts traffic
+   - Only web authentication permitted
+   - Other traffic is redirected to PSN web portal
+2. After successful authentication, appropriate network access is provided
+
+
+
+ Web Authentication and Guest Services
+ 
+ 
+ - Guest services
+   - Feature needed to provision and manage guest user accounts
+   - Independent from web authentication
+   - Extension to the web authentication to provide overall guest authentication solution
+ - Elements of the guest services
+   - Guests
+   - Sponsors
+   - Guest User Portal
+   - Sponsor Portal
+  
+  
+Central Web Authentication: Lesson 2: Web Authentication Scenarios
+
+
+- Cental Web Auth 
+  - Users authenticated centrally ISE PSN, CoA
+- Local Web Auth (SW or WLC)
+- Device Registration
+  - Enable onboarding of users own device
+  - Consecutive user auth no needed
+  - Authentication by MAB
+
+  
+Central Web Authentication: Lesson 3: Central WebAuth Config Procedure
+
+
+1. Client connects to NAD. May or may not have 802.1X supplicant
+2. NAD initiates an access request
+   - MAB request (no 802.1X supplicant)
+   - Regular user access request (802.1X supplicant)
+3. ISE configured continue operation
+   - Upon "MAB failure" or "User not found"
+   - To allow the central web authentication process to proceed
+4. ISE sends access-accept with URL-redirect to CWA service on PSN
+
+
+
+  Cental WebAuth Operation (Cont.)
+  
+5. User attempts to connect to any URL
+6. NAD pushes redirect URL to client
+7. Client browser sends redirected traffic to PSN
+8. Guest service authenticates the user
+9  Guest service sends a CoA to the NAD
+10. NAD applies new authorization settings
+
+
+
+ Cental WebAuth Config Procedure
+ 
+1. Enable session services for Guest and Sponsor Portals
+2. Set (verify) ISE authentication policy (MAB) to continue after failure
+3. Configure authorization profile for web authentication 
+4. Apply authorization profile to authorization policy
+   1. One policy to redirect initially
+   2. One policy to permit access when authenticated
+5. Configure WLC for central web authentication
+6. Configure WLC ACL for centralized web authentication
+
+
+ Step 1: Enable Session Services
+ 
+ - Session services checkbox enables Guest and Sponsor service portal
+ - RADIUS servers used for CWA of a NAD must be PSNs with session services enabled
+ 
+ Step 2: MAB Authentication set to continue
+ - This is default setting from ISE 1.3
+ - Fail-open authentication rule
+ - Must "Continue" if user not found (it means successfully pass authentication and move to authorization)
+ 
+ 
+ 
+ 
+ Central Web Authentication: Lesson 4: Central WebAuth Config Procedure - Continued
+
+ Step 3: Configure WebAuth Authorization Profile
+ 
+ - authorization profile configured for web authentication  (ACL_WEBAUTH_REDIRECT)
+ - References a named ACL that is configured on the NAD
+   - Definition on switch (HTTP/HTTPS) destination will and will not be redirected 
+   - Redirect all traffic to WebAuth page (ISE)
+   
+ Step 4: Apply Authorization Profile to Policy
+ 
+ - Apply WebAuth Profile to authorization rule
+   - Use the buit-in WebAuth rule
+   - Create new for the purpose
+   - Use the default rule as an catch all
+   
+ Step 5: Configure WLC for Central WebAuth
+ 
+   - In the WLAN setting, enable MAC filtering, AAA override, RADIUS-NAC
+   - Configure RADIUS authentication and accounting
+   
+ Step 6: Configure WLC for Cental WebAuth
+ 
+  - WLC redirect ACL is a regular wireless ACL:
+    - Premit statements for allowed traffic like DNS and traffic to PSN (10.154.200.203)
+	- Traffic implicitly denied is re-directed to the redirect URL
+	
+
+
+
